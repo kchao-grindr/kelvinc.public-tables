@@ -1,3 +1,6 @@
+--includes purchases made between 2022-04-18 and 2022-05-15 run on 2022-05-19
+--
+
 create or replace table kelvinc.public.boost_purchasers as
 (
   with geo as
@@ -28,6 +31,7 @@ create or replace table kelvinc.public.boost_purchasers as
   )
   ,headline as
   (
+    --whether profile had a profile on the date of purchase
     select ret.profile_id, max(iff(dus.displayname is null,0,1)) as has_headline
     from raw_evt ret
     left join bi_user.reporting.dim_user dus on to_date(ret.purchase_ts) = dus.ds and ret.profile_id = dus.profile_id
@@ -35,10 +39,13 @@ create or replace table kelvinc.public.boost_purchasers as
   )
   ,photo as
   (
+    --whether profile had 1+ pics on run date
+    --we only have most recent data, not historical point in time data
     select
         med.profile_id
         ,count(sec.position)+1 as n_pics
     from "AURORA_GRINDR"."RAW"."MEDIA" med
+    --user only shows up in secondary table if there is a pic besides primary
     left join "AURORA_GRINDR"."RAW"."PROFILE_SECONDARY_IMAGE" sec on med.profile_id = sec.profile_id
     where med.isprimary=1
       and med.profile_id in (select distinct profile_id from raw_evt)
