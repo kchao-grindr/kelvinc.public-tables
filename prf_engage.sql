@@ -20,7 +20,7 @@ create or replace table kelvinc.public.prf_engage_boost_20220517_0523 as
       ,to_timestamp(evt.timestamp) as event_ts
   from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
   join prf on evt.profile_id = prf.profile_id
-  where ds between to_date($end_d) - interval '6 day' and $end_d
+  where to_date(event_ts) between to_date($end_d) - interval '6 day' and $end_d
       and evt.event_name in ('tap_sent'
                              ,'profile_chat_tapped'
                              ,'chat_sent'
