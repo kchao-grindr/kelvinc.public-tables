@@ -16,7 +16,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
       ,to_timestamp(evt.timestamp) as event_ts
       ,iff(evt.params:boost='true',1,0) as is_boost
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    join kelvinc.public.boost_purchaser pch on evt.profile_id = pch.profile_id
+    join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
     where event_ts between $start_d and $end_d
       and evt.event_name in ('viewed_me_profile_clicked')
   )
@@ -30,7 +30,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
             when evt.event_name = 'profile_blocked' then 'block' end as event_name
       ,to_timestamp(evt.timestamp) as event_ts
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    join kelvinc.public.boost_purchaser pch on evt.profile_id = pch.profile_id
+    join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
     where event_ts between $start_d and $end_d
         and evt.event_name in ('tap_sent','chat_sent','profile_blocked')
   )

@@ -14,7 +14,7 @@ create or replace table kelvinc.public.boost_purchaser_inbound as
       ,to_timestamp(evt.timestamp) as boost_start_ts
       ,dateadd('min', 60, boost_start_ts) as boost_end_ts
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    join kelvinc.public.boost_purchaser pch on evt.profile_id = pch.profile_id
+    join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
     where to_date(to_timestamp(evt.timestamp)) between $start_d and $end_d
       and
       (
@@ -46,7 +46,7 @@ create or replace table kelvinc.public.boost_purchaser_inbound as
       ,to_timestamp(evt.timestamp) as event_ts
       ,max(iff(evt.params:boost='true',1,0)) as is_boost
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    join kelvinc.public.boost_purchaser pch on evt.profile_id = pch.profile_id
+    join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
     where event_ts between $start_d and $end_d
       and evt.event_name in ('chat_received','tap_received')
     group by 1,2,3,4
