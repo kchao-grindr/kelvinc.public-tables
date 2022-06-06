@@ -43,7 +43,11 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
         ,tcr.event_ts
         ,max(case when bpi.actor_profile_id is not null then 1 else 0 end) as is_boost
     from tap_chat_raw tcr
-    left join kelvinc.public.boost_purchaser_inbound bpi on tcr.actor_profile_id = bpi.target_profile_id and tcr.event_ts >= bpi.event_ts and bpi.is_boost = 1
+    left join kelvinc.public.boost_purchaser_inbound bpi
+    on tcr.actor_profile_id = bpi.target_profile_id
+        and tcr.target_profile_id = bpi.actor_profile_id
+        and tcr.event_ts >= bpi.event_ts
+        and bpi.is_boost = 1
     -- if booster responds to a profile that view/tap/chats the booster during boost,
     -- the response is labeled as boosted as long as response occurs after boost
     group by 1,2,3,4
