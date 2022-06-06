@@ -24,7 +24,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
   (
     select
       evt.profile_id as actor_profile_id
-      ,evt.params:pii_target_profile_id as target_profile_id
+      ,try_cast(evt.params:pii_target_profile_id::text as bigint) as target_profile_id
       ,case when evt.event_name = 'tap_sent' then 'tap'
             when evt.event_name = 'chat_sent' then 'chat'
             when evt.event_name = 'profile_blocked' then 'block' end as event_name
