@@ -25,9 +25,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
     select
       evt.profile_id as actor_profile_id
       ,try_cast(evt.params:pii_target_profile_id::text as bigint) as target_profile_id
-      ,case when evt.event_name = 'tap_sent' then 'tap'
-            when evt.event_name = 'chat_sent' then 'chat'
-            when evt.event_name = 'profile_blocked' then 'block' end as event_name
+      ,lower(event_name) as event_name
       ,to_timestamp(evt.timestamp) as event_ts
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
     join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
@@ -49,7 +47,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
         and tcr.event_ts >= bpi.event_ts
         and bpi.is_boost = 1
     -- if booster responds to a profile that view/tap/chats the booster during boost,
-    -- the response is labeled as boosted as long as response occurs after boost
+    -- the response is labeled as boosted if response occurs after boosted view/tap/chat
     group by 1,2,3,4
   )
   select * from view_prof
