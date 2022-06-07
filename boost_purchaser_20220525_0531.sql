@@ -4,7 +4,7 @@
 set start_d = '2022-05-25';
 set end_d = '2022-05-31';
 
-create or replace table kelvinc.public.boost_purchaser as
+create or replace table kelvinc.public.boost_purchaser_20220525_0531 as
 (
   with purch_evt as
   (
@@ -13,7 +13,7 @@ create or replace table kelvinc.public.boost_purchaser as
       ,evt.profile_id
       ,evt.app_category
       ,evt.os_platform
-      ,row_number() over (partition by evt.profile_id order by evt.timestamp desc) as rn
+      ,row_number() over (partition by evt.profile_id order by evt.timestamp) as rn
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
     where evt.ds between $start_d and $end_d
       and
