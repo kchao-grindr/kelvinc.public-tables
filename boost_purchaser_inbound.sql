@@ -1,6 +1,5 @@
--- table that labels inbound attention for boost purchasers (target) as boost attributed vs not
--- if actor engages with a target while target is boosted, all engagement from actor is boost attributable
--- ie, boost labeling is greedy
+-- labels inbound attention for boost purchasers (target) as boost attributed vs not
+-- engagement is boosted if actor engages with a target while target is boosted
 
 set start_d = '2022-05-25';
 set end_d = '2022-05-31';
@@ -22,36 +21,16 @@ create or replace table kelvinc.public.boost_purchaser_inbound as
         and evt.params:feature = 'boost'
       )
   )
-  ,view_prof as
-  (
-    select
-      evt.profile_id as actor_profile_id
-      ,try_cast(evt.params:pii_target_profile_id::text as bigint) as target_profile_id
-      ,'profile_viewed' as event_name
-      ,to_timestamp(evt.timestamp) as event_ts
-      ,max(case when btm.booster_profile_id is not null then 1 else 0 end) as is_boost
-    from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    left join boost_tm btm on try_cast(evt.params:pii_target_profile_id::text as bigint) = btm.booster_profile_id and to_timestamp(evt.timestamp) between btm.boost_start_ts and btm.boost_end_ts
-    where event_ts between $start_d and $end_d
-      and lower(evt.event_name) = 'profile_viewed'
-    group by 1,2,3,4
-  )
-  ,tap_chat as
-  (
-    select
-      try_cast(evt.params:pii_target_profile_id::text as bigint) as actor_profile_id
-      ,evt.profile_id as target_profile_id --recipient of the tap or chat
-      ,case when evt.event_name = 'tap_received' then 'tap'
-            when evt.event_name = 'chat_received' then 'chat' end as event_name
-      ,to_timestamp(evt.timestamp) as event_ts
-      ,max(iff(evt.params:boost='true',1,0)) as is_boost
-    from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
-    join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
-    where event_ts between $start_d and $end_d
-      and evt.event_name in ('chat_received','tap_received')
-    group by 1,2,3,4
-  )
-  select * from view_prof
-  union all
-  select * from tap_chat
+  select
+    evt.profile_id as actor_profile_id
+    ,try_cast(evt.params:pii_target_profile_id::text as bigint) as target_profile_id
+    ,lower(event_name) as event_name
+    ,to_timestamp(evt.timestamp) as event_ts
+    ,max(case when btm.booster_profile_id is not null then 1 else 0 end) as is_boost
+  from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
+  join kelvinc.public.boost_purchaser_20220525_0531 pch on try_cast(evt.params:pii_target_profile_id::text as bigint) = pch.profile_id
+  left join boost_tm btm on try_cast(evt.params:pii_target_profile_id::text as bigint) = btm.booster_profile_id and to_timestamp(evt.timestamp) between btm.boost_start_ts and btm.boost_end_ts
+  where event_ts between $start_d and $end_d
+    and lower(evt.event_name) in ('profile_viewed','chat_sent','tap_sent')
+  group by 1,2,3,4
 )
