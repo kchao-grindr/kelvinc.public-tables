@@ -15,6 +15,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
       ,evt.event_name
       ,to_timestamp(evt.timestamp) as event_ts
       ,iff(evt.params:boost='true',1,0) as is_boost
+      ,null as is_latest_boost
     from "FLUENTD_EVENTS"."REPORTING"."CLIENT_EVENT_HOURLY" evt
     join kelvinc.public.boost_purchaser_20220525_0531 pch on evt.profile_id = pch.profile_id
     where event_ts between $start_d and $end_d
@@ -40,6 +41,7 @@ create or replace table kelvinc.public.boost_purchaser_outbound as
         ,tcr.event_name
         ,tcr.event_ts
         ,max(case when bpi.actor_profile_id is not null then 1 else 0 end) as is_boost
+        ,max(case when bpi.is_latest_boost = 1 then 1 else 0 end) as is_latest_boost
     from tap_chat_raw tcr
     left join kelvinc.public.boost_purchaser_inbound bpi
     on tcr.actor_profile_id = bpi.target_profile_id
